@@ -7,12 +7,104 @@
 
 body {
     background-color: #f5f5f5;
+    scroll-behavior: smooth;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* 头部样式 */
+header {
+    background-color: #e53935;
+    color: white;
+    padding: 15px 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+nav {
+    display: flex;
+    gap: 10px;
+}
+
+nav button {
+    background-color: rgba(255,255,255,0.2);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+nav button:hover {
+    background-color: rgba(255,255,255,0.3);
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    flex: 1;
+}
+
+/* 筛选区域样式 */
+.filter-section {
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.type-filter {
+    margin-top: 20px;
+}
+
+.type-filter span {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.type-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.type-button {
+    border: none;
+    border-radius: 20px;
+    padding: 5px 12px;
+    color: white;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s;
+}
+
+.type-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.type-button.active {
+    box-shadow: 0 0 0 2px #333;
 }
 
 h1 {
@@ -96,6 +188,14 @@ h1 {
 .pokemon-card img {
     width: 120px;
     height: 120px;
+    object-fit: contain;
+    will-change: transform;
+    loading: lazy;
+    transition: transform 0.3s ease;
+}
+
+.pokemon-card:hover img {
+    transform: scale(1.1);
 }
 
 .pokemon-card h3 {
@@ -134,6 +234,75 @@ h1 {
     margin: 50px 0;
 }
 
+.loading-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    z-index: 1000;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.7; }
+    50% { opacity: 1; }
+    100% { opacity: 0.7; }
+}
+
+/* 页脚样式 */
+footer {
+    background-color: #333;
+    color: white;
+    padding: 20px 0;
+    margin-top: 30px;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    text-align: center;
+}
+
+footer a {
+    color: #f5f5f5;
+    text-decoration: none;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
+/* 夜间模式 */
+body.dark-mode {
+    background-color: #121212;
+    color: #f5f5f5;
+}
+
+body.dark-mode .filter-section,
+body.dark-mode .pokemon-card,
+body.dark-mode .modal-content,
+body.dark-mode .info-section {
+    background-color: #1e1e1e;
+    color: #f5f5f5;
+}
+
+body.dark-mode .pokemon-card h3 {
+    color: #f5f5f5;
+}
+
+body.dark-mode .close {
+    color: #f5f5f5;
+}
+
+body.dark-mode .sprite-gallery img {
+    background-color: #2d2d2d;
+}
+
 .type {
     display: inline-block;
     padding: 3px 10px;
@@ -167,6 +336,10 @@ h1 {
     justify-content: center;
     align-items: center;
     margin-top: 20px;
+    background-color: white;
+    border-radius: 30px;
+    padding: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .pagination button {
@@ -174,14 +347,117 @@ h1 {
     background-color: #e53935;
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 30px;
     cursor: pointer;
-    margin: 0 10px;
+    margin: 0 5px;
+    transition: all 0.3s;
+    font-weight: bold;
+    min-width: 100px;
+}
+
+.pagination button:hover:not(:disabled) {
+    background-color: #c62828;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.pagination button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.page-info {
+    display: flex;
+    align-items: center;
+    margin: 0 15px;
+    font-size: 16px;
+    color: #333;
+}
+
+.page-jump {
+    display: flex;
+    align-items: center;
+    margin-left: 15px;
+}
+
+#page-input {
+    width: 70px;
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 20px 0 0 20px;
+    text-align: center;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+#page-input:focus {
+    outline: none;
+    border-color: #e53935;
+    box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.2);
+}
+
+#jump-button {
+    padding: 8px 12px;
+    background-color: #e53935;
+    color: white;
+    border: none;
+    border-radius: 0 20px 20px 0;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: bold;
+}
+
+#jump-button:hover {
+    background-color: #c62828;
+    transform: translateY(-1px);
+}
+
+#jump-button:active {
+    transform: translateY(1px);
+}
+
+body.dark-mode #page-input {
+    background-color: #333;
+    color: #f5f5f5;
+    border-color: #555;
+}
+
+#page-input.invalid {
+    border-color: #e53935;
+    background-color: rgba(229, 57, 53, 0.1);
+    animation: shake 0.5s;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
 }
 
 #current-page {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: bold;
+    color: #e53935;
+    margin: 0 5px;
+}
+
+#total-pages {
+    font-size: 16px;
+    color: #666;
+    margin-left: 5px;
+}
+
+/* 夜间模式下的分页样式 */
+body.dark-mode .pagination {
+    background-color: #1e1e1e;
+}
+
+body.dark-mode .page-info {
+    color: #f5f5f5;
+}
+
+body.dark-mode #total-pages {
+    color: #aaa;
 }
 
 .modal {
@@ -221,6 +497,131 @@ h1 {
     display: flex;
     flex-direction: column;
     align-items: center;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.pokemon-images {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.main-image {
+    width: 200px;
+    height: 200px;
+    object-fit: contain;
+    margin-bottom: 10px;
+}
+
+.sprite-gallery {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.sprite-gallery img {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    background-color: #f5f5f5;
+    border-radius: 5px;
+    padding: 5px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.sprite-gallery img:hover {
+    transform: scale(1.2);
+}
+
+.pokemon-info {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.info-section {
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.evolution-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.evolution-stage {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.evolution-arrow {
+    font-size: 24px;
+    margin: 0 10px;
+    color: #666;
+}
+
+.evolution-branches {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.evolution-branch {
+    display: flex;
+    align-items: center;
+    margin: 5px;
+}
+
+.evolution-pokemon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+
+.evolution-pokemon:hover {
+    background-color: #f0f0f0;
+}
+
+.evolution-pokemon img {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+}
+
+.evolution-pokemon p {
+    margin: 5px 0 0;
+    font-size: 12px;
+    text-align: center;
+}
+
+.favorite-button {
+    background-color: #e53935;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 15px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.favorite-button:hover {
+    background-color: #c62828;
+    transform: scale(1.05);
 }
 
 .stats {

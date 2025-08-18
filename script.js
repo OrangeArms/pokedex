@@ -117,9 +117,12 @@ const chineseNames = {
 let pokemonContainer;
 let searchInput;
 let searchButton;
-let prevButton;
-let nextButton;
+let firstPageButton;
+let lastPageButton;
 let currentPageSpan;
+let totalPagesSpan;
+let pageInput;
+let jumpButton;
 let modal;
 let modalClose;
 let pokemonDetails;
@@ -129,39 +132,95 @@ async function fetchPokemons() {
     try {
         pokemonContainer.innerHTML = '<p class="loading">正在加载宝可梦数据，请稍候...</p>';
         
-        // 由于API限制，我们分批次获取宝可梦数据
-        // 第一世代 (1-151)
+        // 初始只加载第一世代宝可梦，提高首次加载速度
         const gen1 = await fetchPokemonsByRange(1, 151);
-        // 第二世代 (152-251)
-        const gen2 = await fetchPokemonsByRange(152, 251);
-        // 第三世代 (252-386)
-        const gen3 = await fetchPokemonsByRange(252, 386);
-        // 第四世代 (387-493)
-        const gen4 = await fetchPokemonsByRange(387, 493);
-        // 第五世代 (494-649)
-        const gen5 = await fetchPokemonsByRange(494, 649);
-        // 第六世代 (650-721)
-        const gen6 = await fetchPokemonsByRange(650, 721);
-        // 第七世代 (722-809)
-        const gen7 = await fetchPokemonsByRange(722, 809);
-        // 第八世代 (810-905)
-        const gen8 = await fetchPokemonsByRange(810, 905);
-        // 第九世代 (906-1025)
-        const gen9 = await fetchPokemonsByRange(906, 1025);
-        
-        // 合并所有世代的数据
-        allPokemons = [...gen1, ...gen2, ...gen3, ...gen4, ...gen5, ...gen6, ...gen7, ...gen8, ...gen9].filter(p => p !== null);
         
         // 按ID排序
+        allPokemons = [...gen1].filter(p => p !== null);
         allPokemons.sort((a, b) => a.id - b.id);
         
         filteredPokemons = [...allPokemons];
         displayPokemons();
         
-        console.log(`成功加载了 ${allPokemons.length} 个宝可梦`);
+        console.log(`成功加载了第一世代 ${allPokemons.length} 个宝可梦`);
+        
+        // 在后台继续加载其他世代
+        loadRemainingGenerations();
     } catch (error) {
         console.error('获取宝可梦数据失败:', error);
         pokemonContainer.innerHTML = '<p class="error">获取数据失败，请稍后再试</p>';
+    }
+}
+
+// 在后台加载其余世代的宝可梦
+async function loadRemainingGenerations() {
+    try {
+        // 显示加载提示
+        const loadingIndicator = document.createElement('div');
+        loadingIndicator.className = 'loading-indicator';
+        loadingIndicator.textContent = '正在后台加载更多宝可梦...';
+        document.body.appendChild(loadingIndicator);
+        
+        // 第二世代 (152-251)
+        const gen2 = await fetchPokemonsByRange(152, 251);
+        allPokemons = [...allPokemons, ...gen2.filter(p => p !== null)];
+        updatePokemonData();
+        
+        // 第三世代 (252-386)
+        const gen3 = await fetchPokemonsByRange(252, 386);
+        allPokemons = [...allPokemons, ...gen3.filter(p => p !== null)];
+        updatePokemonData();
+        
+        // 第四世代 (387-493)
+        const gen4 = await fetchPokemonsByRange(387, 493);
+        allPokemons = [...allPokemons, ...gen4.filter(p => p !== null)];
+        updatePokemonData();
+        
+        // 第五世代 (494-649)
+        const gen5 = await fetchPokemonsByRange(494, 649);
+        allPokemons = [...allPokemons, ...gen5.filter(p => p !== null)];
+        updatePokemonData();
+        
+        // 第六世代 (650-721)
+        const gen6 = await fetchPokemonsByRange(650, 721);
+        allPokemons = [...allPokemons, ...gen6.filter(p => p !== null)];
+        updatePokemonData();
+        
+        // 第七世代 (722-809)
+        const gen7 = await fetchPokemonsByRange(722, 809);
+        allPokemons = [...allPokemons, ...gen7.filter(p => p !== null)];
+        updatePokemonData();
+        
+        // 第八世代 (810-905)
+        const gen8 = await fetchPokemonsByRange(810, 905);
+        allPokemons = [...allPokemons, ...gen8.filter(p => p !== null)];
+        updatePokemonData();
+        
+        // 第九世代 (906-1025)
+        const gen9 = await fetchPokemonsByRange(906, 1025);
+        allPokemons = [...allPokemons, ...gen9.filter(p => p !== null)];
+        
+        // 最终更新
+        updatePokemonData();
+        
+        // 移除加载提示
+        document.body.removeChild(loadingIndicator);
+        
+        console.log(`成功加载了所有 ${allPokemons.length} 个宝可梦`);
+    } catch (error) {
+        console.error('后台加载宝可梦数据失败:', error);
+    }
+}
+
+// 更新宝可梦数据
+function updatePokemonData() {
+    // 按ID排序
+    allPokemons.sort((a, b) => a.id - b.id);
+    
+    // 如果当前选择的是"全部"，则更新过滤后的宝可梦
+    if (currentGeneration === 'all') {
+        filteredPokemons = [...allPokemons];
+        displayPokemons();
     }
 }
 
@@ -191,7 +250,10 @@ async function fetchPokemonById(id) {
 // 显示宝可梦
 function displayPokemons() {
     pokemonContainer.innerHTML = '';
+    
+    const totalPages = Math.ceil(filteredPokemons.length / pokemonsPerPage);
     currentPageSpan.textContent = currentPage;
+    totalPagesSpan.textContent = totalPages;
     
     const start = (currentPage - 1) * pokemonsPerPage;
     const end = start + pokemonsPerPage;
@@ -201,6 +263,12 @@ function displayPokemons() {
         pokemonContainer.innerHTML = '<p class="no-results">没有找到匹配的宝可梦</p>';
         return;
     }
+    
+    // 添加平滑滚动到顶部
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // 创建一个文档片段来提高性能
+    const fragment = document.createDocumentFragment();
     
     pokemonsToDisplay.forEach(pokemon => {
         const pokemonCard = document.createElement('div');
@@ -224,12 +292,14 @@ function displayPokemons() {
             <p class="generation">第${generation.number}世代 (${generation.name})</p>
         `;
         
-        pokemonContainer.appendChild(pokemonCard);
+        fragment.appendChild(pokemonCard);
     });
     
+    pokemonContainer.appendChild(fragment);
+    
     // 更新分页按钮状态
-    prevButton.disabled = currentPage === 1;
-    nextButton.disabled = currentPage === Math.ceil(filteredPokemons.length / pokemonsPerPage);
+    firstPageButton.disabled = currentPage === 1;
+    lastPageButton.disabled = currentPage === totalPages;
 }
 
 // 按世代过滤宝可梦
@@ -327,21 +397,190 @@ function showPokemonDetails(pokemon) {
     // 获取世代信息
     const generation = getGeneration(pokemon.id);
     
-    pokemonDetails.innerHTML = `
-        <h2>#${pokemon.id.toString().padStart(4, '0')} ${chineseName} (${capitalizeFirstLetter(pokemon.name)})</h2>
-        <p class="generation-detail">第${generation.number}世代 (${generation.name})</p>
-        <img src="${pokemon.sprites.other['official-artwork']?.front_default || pokemon.sprites.front_default}" alt="${pokemon.name}" style="width: 200px; height: 200px;" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png'">
-        <div>${types}</div>
-        <p>身高: ${pokemon.height / 10}m</p>
-        <p>体重: ${pokemon.weight / 10}kg</p>
-        <p>特性: ${abilities}</p>
-        <div class="stats">
-            <h3>能力值</h3>
-            ${stats}
+    // 获取宝可梦的进化链（如果可用）
+    fetchEvolutionChain(pokemon.id).then(evolutionHTML => {
+        pokemonDetails.innerHTML = `
+            <h2>#${pokemon.id.toString().padStart(4, '0')} ${chineseName} (${capitalizeFirstLetter(pokemon.name)})</h2>
+            <p class="generation-detail">第${generation.number}世代 (${generation.name})</p>
+            <div class="pokemon-images">
+                <img src="${pokemon.sprites.other['official-artwork']?.front_default || pokemon.sprites.front_default}" alt="${pokemon.name}" class="main-image" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png'">
+                <div class="sprite-gallery">
+                    ${pokemon.sprites.front_default ? `<img src="${pokemon.sprites.front_default}" alt="正面" title="正面">` : ''}
+                    ${pokemon.sprites.back_default ? `<img src="${pokemon.sprites.back_default}" alt="背面" title="背面">` : ''}
+                    ${pokemon.sprites.front_shiny ? `<img src="${pokemon.sprites.front_shiny}" alt="闪光正面" title="闪光正面">` : ''}
+                    ${pokemon.sprites.back_shiny ? `<img src="${pokemon.sprites.back_shiny}" alt="闪光背面" title="闪光背面">` : ''}
+                </div>
+            </div>
+            <div class="pokemon-info">
+                <div class="info-section">
+                    <h3>基本信息</h3>
+                    <div>${types}</div>
+                    <p>身高: ${pokemon.height / 10}m</p>
+                    <p>体重: ${pokemon.weight / 10}kg</p>
+                    <p>特性: ${abilities}</p>
+                </div>
+                
+                <div class="info-section">
+                    <h3>能力值</h3>
+                    ${stats}
+                </div>
+                
+                <div class="info-section evolution-chain">
+                    <h3>进化链</h3>
+                    <div class="evolution-container">
+                        ${evolutionHTML}
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <h3>收藏</h3>
+                    <button id="favorite-button" class="favorite-button" onclick="toggleFavorite(${pokemon.id})">
+                        ${isFavorite(pokemon.id) ? '❤️ 取消收藏' : '🤍 添加收藏'}
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // 更新收藏按钮状态
+        updateFavoriteButton(pokemon.id);
+    });
+    
+    modal.style.display = 'block';
+}
+
+// 获取宝可梦进化链
+async function fetchEvolutionChain(pokemonId) {
+    try {
+        // 先获取宝可梦种类信息
+        const speciesResponse = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemonId}/`);
+        const speciesData = await speciesResponse.json();
+        
+        // 获取进化链URL
+        const evolutionChainUrl = speciesData.evolution_chain.url;
+        
+        // 获取进化链数据
+        const evolutionResponse = await fetch(evolutionChainUrl);
+        const evolutionData = await evolutionResponse.json();
+        
+        // 处理进化链数据
+        return renderEvolutionChain(evolutionData.chain);
+    } catch (error) {
+        console.error('获取进化链失败:', error);
+        return '<p>无法加载进化信息</p>';
+    }
+}
+
+// 渲染进化链
+function renderEvolutionChain(chain) {
+    if (!chain) return '<p>无进化信息</p>';
+    
+    let html = '<div class="evolution-stage">';
+    
+    // 获取当前宝可梦
+    const currentPokemon = chain.species;
+    const currentPokemonId = extractPokemonId(currentPokemon.url);
+    const currentPokemonName = chineseNames[currentPokemon.name] || capitalizeFirstLetter(currentPokemon.name);
+    
+    html += `
+        <div class="evolution-pokemon" onclick="fetchAndShowPokemonById(${currentPokemonId})">
+            <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${currentPokemonId}.png" alt="${currentPokemon.name}">
+            <p>${currentPokemonName}</p>
         </div>
     `;
     
-    modal.style.display = 'block';
+    // 如果有进化形态
+    if (chain.evolves_to && chain.evolves_to.length > 0) {
+        html += '<div class="evolution-arrow">→</div><div class="evolution-branches">';
+        
+        // 处理每个进化分支
+        chain.evolves_to.forEach(evolution => {
+            const evoPokemonId = extractPokemonId(evolution.species.url);
+            const evoPokemonName = chineseNames[evolution.species.name] || capitalizeFirstLetter(evolution.species.name);
+            
+            html += `
+                <div class="evolution-branch">
+                    <div class="evolution-pokemon" onclick="fetchAndShowPokemonById(${evoPokemonId})">
+                        <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${evoPokemonId}.png" alt="${evolution.species.name}">
+                        <p>${evoPokemonName}</p>
+                    </div>
+            `;
+            
+            // 如果还有进一步进化
+            if (evolution.evolves_to && evolution.evolves_to.length > 0) {
+                html += '<div class="evolution-arrow">→</div><div class="evolution-branches">';
+                
+                evolution.evolves_to.forEach(finalEvolution => {
+                    const finalEvoPokemonId = extractPokemonId(finalEvolution.species.url);
+                    const finalEvoPokemonName = chineseNames[finalEvolution.species.name] || capitalizeFirstLetter(finalEvolution.species.name);
+                    
+                    html += `
+                        <div class="evolution-pokemon" onclick="fetchAndShowPokemonById(${finalEvoPokemonId})">
+                            <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${finalEvoPokemonId}.png" alt="${finalEvolution.species.name}">
+                            <p>${finalEvoPokemonName}</p>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+            }
+            
+            html += '</div>';
+        });
+        
+        html += '</div>';
+    }
+    
+    html += '</div>';
+    return html;
+}
+
+// 从URL中提取宝可梦ID
+function extractPokemonId(url) {
+    const matches = url.match(/\/(\d+)\/$/);
+    return matches ? matches[1] : null;
+}
+
+// 通过ID获取并显示宝可梦详情
+async function fetchAndShowPokemonById(id) {
+    try {
+        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}/`);
+        const pokemon = await response.json();
+        showPokemonDetails(pokemon);
+    } catch (error) {
+        console.error(`获取宝可梦 ID:${id} 数据失败:`, error);
+    }
+}
+
+// 收藏功能
+function toggleFavorite(pokemonId) {
+    let favorites = JSON.parse(localStorage.getItem('pokemonFavorites')) || [];
+    
+    if (isFavorite(pokemonId)) {
+        // 移除收藏
+        favorites = favorites.filter(id => id !== pokemonId);
+        localStorage.setItem('pokemonFavorites', JSON.stringify(favorites));
+    } else {
+        // 添加收藏
+        favorites.push(pokemonId);
+        localStorage.setItem('pokemonFavorites', JSON.stringify(favorites));
+    }
+    
+    // 更新按钮状态
+    updateFavoriteButton(pokemonId);
+}
+
+// 检查是否已收藏
+function isFavorite(pokemonId) {
+    const favorites = JSON.parse(localStorage.getItem('pokemonFavorites')) || [];
+    return favorites.includes(pokemonId);
+}
+
+// 更新收藏按钮状态
+function updateFavoriteButton(pokemonId) {
+    const favoriteButton = document.getElementById('favorite-button');
+    if (favoriteButton) {
+        favoriteButton.innerHTML = isFavorite(pokemonId) ? '❤️ 取消收藏' : '🤍 添加收藏';
+    }
 }
 
 // 获取宝可梦所属的世代
@@ -398,6 +637,10 @@ function getChineseStat(stat) {
     return statMap[stat] || stat;
 }
 
+// 全局变量
+let selectedType = null;
+let isFavoritesMode = false;
+
 // 初始化
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM 加载完成，初始化 UI');
@@ -406,12 +649,24 @@ document.addEventListener('DOMContentLoaded', () => {
     pokemonContainer = document.getElementById('pokemon-container');
     searchInput = document.getElementById('search-input');
     searchButton = document.getElementById('search-button');
-    prevButton = document.getElementById('prev-button');
-    nextButton = document.getElementById('next-button');
+    firstPageButton = document.getElementById('first-page-button');
+    lastPageButton = document.getElementById('last-page-button');
     currentPageSpan = document.getElementById('current-page');
+    totalPagesSpan = document.getElementById('total-pages');
+    pageInput = document.getElementById('page-input');
+    jumpButton = document.getElementById('jump-button');
     modal = document.getElementById('pokemon-modal');
     modalClose = document.querySelector('.close');
     pokemonDetails = document.getElementById('pokemon-details');
+    
+    const themeToggle = document.getElementById('theme-toggle');
+    const favoritesButton = document.getElementById('favorites-button');
+    
+    // 应用保存的主题
+    if (localStorage.getItem('darkMode') === 'true') {
+        document.body.classList.add('dark-mode');
+        themeToggle.textContent = '☀️ 日间模式';
+    }
     
     // 事件监听
     searchButton.addEventListener('click', searchPokemons);
@@ -420,17 +675,28 @@ document.addEventListener('DOMContentLoaded', () => {
             searchPokemons();
         }
     });
-    prevButton.addEventListener('click', () => {
-        if (currentPage > 1) {
-            currentPage--;
+    firstPageButton.addEventListener('click', () => {
+        if (currentPage !== 1) {
+            currentPage = 1;
             displayPokemons();
         }
     });
-    nextButton.addEventListener('click', () => {
+    lastPageButton.addEventListener('click', () => {
         const maxPage = Math.ceil(filteredPokemons.length / pokemonsPerPage);
-        if (currentPage < maxPage) {
-            currentPage++;
+        if (currentPage !== maxPage) {
+            currentPage = maxPage;
             displayPokemons();
+        }
+    });
+    
+    // 页码跳转功能
+    jumpButton.addEventListener('click', () => {
+        jumpToPage();
+    });
+    
+    pageInput.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') {
+            jumpToPage();
         }
     });
     modalClose.addEventListener('click', () => {
@@ -442,9 +708,52 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
+    // 夜间模式切换
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        localStorage.setItem('darkMode', isDarkMode);
+        themeToggle.textContent = isDarkMode ? '☀️ 日间模式' : '🌙 夜间模式';
+    });
+    
+    // 添加键盘导航
+    document.addEventListener('keydown', (e) => {
+        // 如果模态框打开，不处理键盘导航
+        if (modal.style.display === 'block') return;
+        
+        // Home键 - 首页
+        if (e.key === 'Home' && !firstPageButton.disabled) {
+            currentPage = 1;
+            displayPokemons();
+        }
+        // End键 - 末页
+        else if (e.key === 'End' && !lastPageButton.disabled) {
+            const maxPage = Math.ceil(filteredPokemons.length / pokemonsPerPage);
+            currentPage = maxPage;
+            displayPokemons();
+        }
+    });
+    
+    // 收藏按钮
+    favoritesButton.addEventListener('click', () => {
+        isFavoritesMode = !isFavoritesMode;
+        favoritesButton.textContent = isFavoritesMode ? '🔍 显示全部' : '❤️ 我的收藏';
+        
+        if (isFavoritesMode) {
+            showFavorites();
+        } else {
+            filterByGeneration(currentGeneration);
+        }
+    });
+    
     // 世代选择按钮事件监听
     document.querySelectorAll('.gen-button').forEach(button => {
         button.addEventListener('click', function() {
+            if (isFavoritesMode) {
+                isFavoritesMode = false;
+                favoritesButton.textContent = '❤️ 我的收藏';
+            }
+            
             // 移除所有按钮的active类
             document.querySelectorAll('.gen-button').forEach(btn => {
                 btn.classList.remove('active');
@@ -461,6 +770,87 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
+    // 属性筛选按钮事件监听
+    document.querySelectorAll('.type-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const type = this.getAttribute('data-type');
+            
+            if (isFavoritesMode) {
+                isFavoritesMode = false;
+                favoritesButton.textContent = '❤️ 我的收藏';
+            }
+            
+            // 如果点击的是当前选中的属性，则取消选择
+            if (selectedType === type) {
+                selectedType = null;
+                document.querySelectorAll('.type-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                filterByGeneration(currentGeneration);
+            } else {
+                selectedType = type;
+                document.querySelectorAll('.type-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                this.classList.add('active');
+                filterByType(type);
+            }
+        });
+    });
+    
     // 开始获取宝可梦数据
     fetchPokemons();
 });
+
+// 按属性筛选宝可梦
+function filterByType(type) {
+    if (currentGeneration === 'all') {
+        filteredPokemons = allPokemons.filter(pokemon => 
+            pokemon.types.some(t => t.type.name === type)
+        );
+    } else {
+        const gen = generations[currentGeneration];
+        filteredPokemons = allPokemons.filter(pokemon => 
+            pokemon.id >= gen.start && 
+            pokemon.id <= gen.end &&
+            pokemon.types.some(t => t.type.name === type)
+        );
+    }
+    
+    currentPage = 1;
+    displayPokemons();
+}
+
+// 显示收藏的宝可梦
+function showFavorites() {
+    const favorites = JSON.parse(localStorage.getItem('pokemonFavorites')) || [];
+    
+    if (favorites.length === 0) {
+        filteredPokemons = [];
+        pokemonContainer.innerHTML = '<p class="no-results">您还没有收藏任何宝可梦</p>';
+        return;
+    }
+    
+    filteredPokemons = allPokemons.filter(pokemon => favorites.includes(pokemon.id));
+    currentPage = 1;
+    displayPokemons();
+}
+
+// 跳转到指定页码
+function jumpToPage() {
+    const inputPage = parseInt(pageInput.value);
+    const maxPage = Math.ceil(filteredPokemons.length / pokemonsPerPage);
+    
+    if (isNaN(inputPage) || inputPage < 1 || inputPage > maxPage) {
+        // 输入无效，显示提示并保留输入值
+        pageInput.classList.add('invalid');
+        setTimeout(() => {
+            pageInput.classList.remove('invalid');
+        }, 800);
+        return;
+    }
+    
+    currentPage = inputPage;
+    displayPokemons();
+    // 保留输入值，方便用户继续操作
+}
