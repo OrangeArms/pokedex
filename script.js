@@ -117,6 +117,8 @@ const chineseNames = {
 let pokemonContainer;
 let searchInput;
 let searchButton;
+let prevButton;
+let nextButton;
 let firstPageButton;
 let lastPageButton;
 let currentPageSpan;
@@ -299,6 +301,8 @@ function displayPokemons() {
     
     // 更新分页按钮状态
     firstPageButton.disabled = currentPage === 1;
+    prevButton.disabled = currentPage === 1;
+    nextButton.disabled = currentPage === totalPages;
     lastPageButton.disabled = currentPage === totalPages;
 }
 
@@ -649,6 +653,8 @@ document.addEventListener('DOMContentLoaded', () => {
     pokemonContainer = document.getElementById('pokemon-container');
     searchInput = document.getElementById('search-input');
     searchButton = document.getElementById('search-button');
+    prevButton = document.getElementById('prev-button');
+    nextButton = document.getElementById('next-button');
     firstPageButton = document.getElementById('first-page-button');
     lastPageButton = document.getElementById('last-page-button');
     currentPageSpan = document.getElementById('current-page');
@@ -673,6 +679,19 @@ document.addEventListener('DOMContentLoaded', () => {
     searchInput.addEventListener('keyup', (e) => {
         if (e.key === 'Enter') {
             searchPokemons();
+        }
+    });
+    prevButton.addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            displayPokemons();
+        }
+    });
+    nextButton.addEventListener('click', () => {
+        const maxPage = Math.ceil(filteredPokemons.length / pokemonsPerPage);
+        if (currentPage < maxPage) {
+            currentPage++;
+            displayPokemons();
         }
     });
     firstPageButton.addEventListener('click', () => {
@@ -721,8 +740,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // 如果模态框打开，不处理键盘导航
         if (modal.style.display === 'block') return;
         
+        // 左箭头 - 上一页
+        if (e.key === 'ArrowLeft' && !prevButton.disabled) {
+            currentPage--;
+            displayPokemons();
+        }
+        // 右箭头 - 下一页
+        else if (e.key === 'ArrowRight' && !nextButton.disabled) {
+            currentPage++;
+            displayPokemons();
+        }
         // Home键 - 首页
-        if (e.key === 'Home' && !firstPageButton.disabled) {
+        else if (e.key === 'Home' && !firstPageButton.disabled) {
             currentPage = 1;
             displayPokemons();
         }
