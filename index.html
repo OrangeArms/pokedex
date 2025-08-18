@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokedex 图鉴</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Pokedex 宝可梦图鉴</h1>
+        <div class="generation-selector">
+            <button class="gen-button active" data-gen="all">全部</button>
+            <button class="gen-button" data-gen="1">第一世代</button>
+            <button class="gen-button" data-gen="2">第二世代</button>
+            <button class="gen-button" data-gen="3">第三世代</button>
+            <button class="gen-button" data-gen="4">第四世代</button>
+            <button class="gen-button" data-gen="5">第五世代</button>
+            <button class="gen-button" data-gen="6">第六世代</button>
+            <button class="gen-button" data-gen="7">第七世代</button>
+            <button class="gen-button" data-gen="8">第八世代</button>
+            <button class="gen-button" data-gen="9">第九世代</button>
+        </div>
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="搜索宝可梦...">
+            <button id="search-button">搜索</button>
+        </div>
+        <div class="pokemon-container" id="pokemon-container"></div>
+        <div id="pokemon-modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <div id="pokemon-details"></div>
+            </div>
+        </div>
+        <div class="pagination">
+            <button id="prev-button">上一页</button>
+            <span id="current-page">1</span>
+            <button id="next-button">下一页</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
