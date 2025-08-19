@@ -1,3 +1,21 @@
+/* 使用CSS变量定义主题颜色，便于维护和切换主题 */
+:root {
+    --primary-color: #e53935;
+    --secondary-color: #c62828;
+    --background-color: #f5f5f5;
+    --card-background: #ffffff;
+    --text-color: #333333;
+    --text-secondary: #666666;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --shadow-hover: rgba(0, 0, 0, 0.2);
+    
+    /* 夜间模式颜色 */
+    --dark-background: #121212;
+    --dark-card-background: #1e1e1e;
+    --dark-text-color: #f5f5f5;
+    --dark-text-secondary: #aaaaaa;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -6,21 +24,27 @@
 }
 
 body {
-    background-color: #f5f5f5;
+    background-color: var(--background-color);
     scroll-behavior: smooth;
     margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    color: var(--text-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* 头部样式 */
 header {
-    background-color: #e53935;
+    background-color: var(--primary-color);
     color: white;
     padding: 15px 0;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 5px var(--shadow-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    will-change: transform; /* 优化滚动性能 */
 }
 
 .header-content {
@@ -35,6 +59,7 @@ header {
 header h1 {
     margin: 0;
     font-size: 24px;
+    font-weight: 700;
 }
 
 nav {
@@ -49,11 +74,13 @@ nav button {
     border-radius: 20px;
     padding: 8px 15px;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: background-color 0.3s, transform 0.2s;
+    font-weight: 500;
 }
 
 nav button:hover {
     background-color: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
 }
 
 .container {
@@ -172,17 +199,20 @@ h1 {
 }
 
 .pokemon-card {
-    background-color: white;
+    background-color: var(--card-background);
     border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px var(--shadow-color);
     padding: 15px;
     text-align: center;
     cursor: pointer;
-    transition: transform 0.3s;
+    transition: transform 0.3s, box-shadow 0.3s;
+    will-change: transform; /* 优化动画性能 */
+    contain: content; /* 提高渲染性能 */
 }
 
 .pokemon-card:hover {
     transform: translateY(-5px);
+    box-shadow: 0 5px 15px var(--shadow-hover);
 }
 
 .pokemon-card img {
@@ -190,8 +220,9 @@ h1 {
     height: 120px;
     object-fit: contain;
     will-change: transform;
-    loading: lazy;
     transition: transform 0.3s ease;
+    backface-visibility: hidden; /* 优化3D变换 */
+    transform: translateZ(0); /* 启用GPU加速 */
 }
 
 .pokemon-card:hover img {
@@ -200,11 +231,16 @@ h1 {
 
 .pokemon-card h3 {
     margin: 10px 0;
-    color: #333;
+    color: var(--text-color);
+    font-weight: 600;
+    font-size: 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .pokemon-card p {
-    color: #666;
+    color: var(--text-secondary);
     font-size: 14px;
 }
 
@@ -279,28 +315,61 @@ footer a:hover {
 
 /* 夜间模式 */
 body.dark-mode {
-    background-color: #121212;
-    color: #f5f5f5;
+    background-color: var(--dark-background);
+    color: var(--dark-text-color);
 }
 
 body.dark-mode .filter-section,
 body.dark-mode .pokemon-card,
 body.dark-mode .modal-content,
-body.dark-mode .info-section {
-    background-color: #1e1e1e;
-    color: #f5f5f5;
+body.dark-mode .info-section,
+body.dark-mode .pagination {
+    background-color: var(--dark-card-background);
+    color: var(--dark-text-color);
 }
 
-body.dark-mode .pokemon-card h3 {
-    color: #f5f5f5;
+body.dark-mode .pokemon-card h3,
+body.dark-mode h2,
+body.dark-mode h3 {
+    color: var(--dark-text-color);
+}
+
+body.dark-mode .pokemon-card p,
+body.dark-mode #total-pages,
+body.dark-mode .evolution-pokemon-id {
+    color: var(--dark-text-secondary);
 }
 
 body.dark-mode .close {
-    color: #f5f5f5;
+    color: var(--dark-text-color);
 }
 
 body.dark-mode .sprite-gallery img {
     background-color: #2d2d2d;
+}
+
+body.dark-mode #page-input {
+    background-color: #333;
+    color: var(--dark-text-color);
+    border-color: #555;
+}
+
+/* 优化夜间模式切换动画 */
+body,
+.filter-section,
+.pokemon-card,
+.modal-content,
+.info-section,
+.pagination,
+.pokemon-card h3,
+h2, h3,
+.pokemon-card p,
+#total-pages,
+.evolution-pokemon-id,
+.close,
+.sprite-gallery img,
+#page-input {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .type {
