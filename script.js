@@ -561,35 +561,63 @@ async function fetchPokemons() {
             return;
         }
         
-        // 获取宝可梦总数
-        const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=1');
-        const data = await response.json();
-        const count = Math.min(data.count, 1025); // 限制最大数量为1025（第九世代）
+        try {
+            // 获取宝可梦总数
+            const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=1');
+            const data = await response.json();
+            const count = Math.min(data.count, 1025); // 限制最大数量为1025（第九世代）
+            
+            // 获取所有宝可梦基本信息
+            const allResponse = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${count}`);
+            const allData = await allResponse.json();
+            
+            allPokemons = allData.results.map((pokemon, index) => {
+                return {
+                    id: index + 1,
+                    name: pokemon.name,
+                    url: pokemon.url
+                };
+            });
+            
+            // 保存到本地缓存
+            localStorage.setItem('pokemons_data', JSON.stringify(allPokemons));
+            localStorage.setItem('pokemons_cache_timestamp', now.toString());
+            
+            filteredPokemons = [...allPokemons];
+            displayPokemons();
+        } catch (networkError) {
+            console.warn('网络请求失败，使用离线数据:', networkError);
+            
+            // 如果有缓存数据，即使过期也使用
+            if (cachedData) {
+                allPokemons = JSON.parse(cachedData);
+                filteredPokemons = [...allPokemons];
+                displayPokemons();
+                showOfflineNotification();
+            } else {
+                // 如果没有缓存数据，显示错误
+                throw new Error('无法获取宝可梦数据，且没有可用的离线数据');
+            }
+        }
         
-        // 获取所有宝可梦基本信息
-        const allResponse = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${count}`);
-        const allData = await allResponse.json();
-        
-        allPokemons = allData.results.map((pokemon, index) => {
-            return {
-                id: index + 1,
-                name: pokemon.name,
-                url: pokemon.url
-            };
-        });
-        
-        // 保存到本地缓存
-        localStorage.setItem('pokemons_data', JSON.stringify(allPokemons));
-        localStorage.setItem('pokemons_cache_timestamp', now.toString());
-        
-        filteredPokemons = [...allPokemons];
-        displayPokemons();
         hideLoading();
     } catch (error) {
         console.error('获取宝可梦数据失败:', error);
         pokemonContainer.innerHTML = '<div class="error">获取宝可梦数据失败，请稍后再试</div>';
         hideLoading();
     }
+}
+
+// 显示离线通知
+function showOfflineNotification() {
+    const notification = document.createElement('div');
+    notification.className = 'network-status offline';
+    notification.textContent = '离线模式 - 使用缓存数据';
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('minimized');
+    }, 5000);
 }
 
 // 显示宝可梦列表
@@ -758,35 +786,63 @@ function filterByGeneration() {
 function filterByType(type) {
     showLoading();
     
+    // 检查缓存中是否有类型数据
+    const cachedTypeData = localStorage.getItem(`pokemon_type_${type}`);
+    const cacheTimestamp = localStorage.getItem(`pokemon_type_timestamp_${type}`);
+    const now = Date.now();
+    
+    // 如果有缓存且缓存时间不超过7天，则使用缓存数据
+    if (cachedTypeData && cacheTimestamp && (now - parseInt(cacheTimestamp)) < 7 * 86400000) {
+        processTypeData(JSON.parse(cachedTypeData), type);
+        return;
+    }
+    
     fetch(`https://pokeapi.co/api/v2/type/${type}`)
         .then(response => response.json())
         .then(data => {
-            const pokemonsByType = data.pokemon.map(p => {
-                const id = extractPokemonId(p.pokemon.url);
-                return {
-                    id: id,
-                    name: p.pokemon.name,
-                    url: p.pokemon.url
-                };
-            }).filter(p => p.id <= 1025); // 限制最大ID为1025
+            // 缓存类型数据
+            localStorage.setItem(`pokemon_type_${type}`, JSON.stringify(data));
+            localStorage.setItem(`pokemon_type_timestamp_${type}`, now.toString());
             
-            if (currentGeneration !== 'all') {
-                const gen = generations[currentGeneration];
-                filteredPokemons = pokemonsByType.filter(pokemon => 
-                    pokemon.id >= gen.start && pokemon.id <= gen.end
-                );
-            } else {
-                filteredPokemons = pokemonsByType;
-            }
-            
-            currentPage = 1;
-            displayPokemons();
-            hideLoading();
+            processTypeData(data, type);
         })
         .catch(error => {
             console.error('按属性筛选失败:', error);
-            hideLoading();
+            
+            // 如果有缓存数据，即使过期也使用
+            if (cachedTypeData) {
+                processTypeData(JSON.parse(cachedTypeData), type);
+                showOfflineNotification();
+            } else {
+                pokemonContainer.innerHTML = '<div class="error">无法获取属性数据，请检查网络连接</div>';
+                hideLoading();
+            }
         });
+}
+
+// 处理类型数据
+function processTypeData(data, type) {
+    const pokemonsByType = data.pokemon.map(p => {
+        const id = extractPokemonId(p.pokemon.url);
+        return {
+            id: id,
+            name: p.pokemon.name,
+            url: p.pokemon.url
+        };
+    }).filter(p => p.id <= 1025); // 限制最大ID为1025
+    
+    if (currentGeneration !== 'all') {
+        const gen = generations[currentGeneration];
+        filteredPokemons = pokemonsByType.filter(pokemon => 
+            pokemon.id >= gen.start && pokemon.id <= gen.end
+        );
+    } else {
+        filteredPokemons = pokemonsByType;
+    }
+    
+    currentPage = 1;
+    displayPokemons();
+    hideLoading();
 }
 
 // 重置属性筛选
@@ -851,26 +907,58 @@ async function fetchAndShowPokemonById(id) {
         showLoading();
         modal.style.display = 'block';
         
-        // 获取宝可梦基本信息
-        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
-        const pokemon = await response.json();
+        // 检查缓存中是否有详情数据
+        const cachedPokemonDetails = localStorage.getItem(`pokemon_details_${id}`);
+        const cacheTimestamp = localStorage.getItem(`pokemon_details_timestamp_${id}`);
+        const now = Date.now();
         
-        // 获取宝可梦种族信息
-        const speciesResponse = await fetch(pokemon.species.url);
-        const species = await speciesResponse.json();
+        // 如果有缓存且缓存时间不超过7天，则使用缓存数据
+        if (cachedPokemonDetails && cacheTimestamp && (now - parseInt(cacheTimestamp)) < 7 * 86400000) {
+            const cachedData = JSON.parse(cachedPokemonDetails);
+            displayPokemonDetails(cachedData.pokemon, cachedData.species, cachedData.evolutionData);
+            hideLoading();
+            return;
+        }
         
-        // 获取进化链
-        const evolutionChainUrl = species.evolution_chain.url;
-        const evolutionResponse = await fetch(evolutionChainUrl);
-        const evolutionData = await evolutionResponse.json();
-        
-        // 显示宝可梦详情
-        displayPokemonDetails(pokemon, species, evolutionData);
+        try {
+            // 获取宝可梦基本信息
+            const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+            const pokemon = await response.json();
+            
+            // 获取宝可梦种族信息
+            const speciesResponse = await fetch(pokemon.species.url);
+            const species = await speciesResponse.json();
+            
+            // 获取进化链
+            const evolutionChainUrl = species.evolution_chain.url;
+            const evolutionResponse = await fetch(evolutionChainUrl);
+            const evolutionData = await evolutionResponse.json();
+            
+            // 缓存详情数据
+            const detailsToCache = { pokemon, species, evolutionData };
+            localStorage.setItem(`pokemon_details_${id}`, JSON.stringify(detailsToCache));
+            localStorage.setItem(`pokemon_details_timestamp_${id}`, now.toString());
+            
+            // 显示宝可梦详情
+            displayPokemonDetails(pokemon, species, evolutionData);
+        } catch (networkError) {
+            console.warn('网络请求失败，尝试使用离线数据:', networkError);
+            
+            // 如果有缓存数据，即使过期也使用
+            if (cachedPokemonDetails) {
+                const cachedData = JSON.parse(cachedPokemonDetails);
+                displayPokemonDetails(cachedData.pokemon, cachedData.species, cachedData.evolutionData);
+                showOfflineNotification();
+            } else {
+                // 如果没有缓存数据，显示错误
+                throw new Error('无法获取宝可梦详情，且没有可用的离线数据');
+            }
+        }
         
         hideLoading();
     } catch (error) {
         console.error('获取宝可梦详情失败:', error);
-        pokemonDetails.innerHTML = '<div class="error">获取宝可梦详情失败，请稍后再试</div>';
+        pokemonDetails.innerHTML = '<div class="error">获取宝可梦详情失败，请稍后再试<br>如果您处于离线状态，可能需要先在线浏览过该宝可梦才能离线查看</div>';
         hideLoading();
     }
 }

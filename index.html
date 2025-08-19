@@ -16,6 +16,7 @@
     <link rel="dns-prefetch" href="https://raw.githubusercontent.com">
     <link rel="preload" href="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" as="image">
     <link rel="icon" href="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png">
+    <link rel="manifest" href="manifest.json">
 </head>
 <body>
     <header>
@@ -105,5 +106,60 @@
     </footer>
     
     <script src="script.js?v=5"></script>
+    <script>
+        // 注册 Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker 注册成功，作用域为：', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker 注册失败：', error);
+                    });
+            });
+        }
+
+        // 添加离线状态检测
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        function updateOnlineStatus() {
+            const statusElement = document.createElement('div');
+            statusElement.className = 'network-status';
+            
+            if (navigator.onLine) {
+                statusElement.textContent = '网络已连接';
+                statusElement.classList.add('online');
+                setTimeout(() => {
+                    statusElement.remove();
+                }, 3000);
+            } else {
+                statusElement.textContent = '离线模式 - 部分功能可能不可用';
+                statusElement.classList.add('offline');
+            }
+            
+            document.body.appendChild(statusElement);
+            
+            if (!navigator.onLine) {
+                setTimeout(() => {
+                    statusElement.classList.add('minimized');
+                }, 5000);
+            }
+        }
+
+        // 检查是否有新版本的 Service Worker
+        let newWorker;
+        let refreshing;
+
+        // 避免页面刷新死循环
+        if (navigator.serviceWorker) {
+            navigator.serviceWorker.addEventListener('controllerchange', function() {
+                if (refreshing) return;
+                refreshing = true;
+                window.location.reload();
+            });
+        }
+    </script>
 </body>
 </html>

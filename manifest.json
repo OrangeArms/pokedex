@@ -1,0 +1,21 @@
+{
+  "name": "Pokedex 宝可梦图鉴",
+  "short_name": "宝可梦图鉴",
+  "description": "查看所有世代的宝可梦信息",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#e53935",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
