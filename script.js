@@ -282,7 +282,7 @@ function displayPokemons() {
         }).join('');
         
         // 获取中文名称
-        const chineseName = chineseNames[pokemon.name] || capitalizeFirstLetter(pokemon.name);
+        const chineseName = getChineseName(pokemon.name, pokemon.id);
         
         // 获取世代信息
         const generation = getGeneration(pokemon.id);
@@ -396,7 +396,7 @@ function showPokemonDetails(pokemon) {
     }).join(', ');
     
     // 获取中文名称
-    const chineseName = chineseNames[pokemon.name] || capitalizeFirstLetter(pokemon.name);
+    const chineseName = getChineseName(pokemon.name, pokemon.id);
     
     // 获取世代信息
     const generation = getGeneration(pokemon.id);
@@ -483,7 +483,8 @@ function renderEvolutionChain(chain) {
     // 获取当前宝可梦
     const currentPokemon = chain.species;
     const currentPokemonId = extractPokemonId(currentPokemon.url);
-    const currentPokemonName = chineseNames[currentPokemon.name] || capitalizeFirstLetter(currentPokemon.name);
+    const currentPokemonId = extractPokemonId(currentPokemon.url);
+    const currentPokemonName = getChineseName(currentPokemon.name, currentPokemonId);
     
     html += `
         <div class="evolution-pokemon" onclick="fetchAndShowPokemonById(${currentPokemonId})">
@@ -499,7 +500,7 @@ function renderEvolutionChain(chain) {
         // 处理每个进化分支
         chain.evolves_to.forEach(evolution => {
             const evoPokemonId = extractPokemonId(evolution.species.url);
-            const evoPokemonName = chineseNames[evolution.species.name] || capitalizeFirstLetter(evolution.species.name);
+            const evoPokemonName = getChineseName(evolution.species.name, evoPokemonId);
             
             html += `
                 <div class="evolution-branch">
@@ -515,7 +516,7 @@ function renderEvolutionChain(chain) {
                 
                 evolution.evolves_to.forEach(finalEvolution => {
                     const finalEvoPokemonId = extractPokemonId(finalEvolution.species.url);
-                    const finalEvoPokemonName = chineseNames[finalEvolution.species.name] || capitalizeFirstLetter(finalEvolution.species.name);
+                    const finalEvoPokemonName = getChineseName(finalEvolution.species.name, finalEvoPokemonId);
                     
                     html += `
                         <div class="evolution-pokemon" onclick="fetchAndShowPokemonById(${finalEvoPokemonId})">
@@ -639,6 +640,18 @@ function getChineseStat(stat) {
         'speed': '速度'
     };
     return statMap[stat] || stat;
+}
+
+// 获取宝可梦中文名称，如果没有中文名称，则返回一个友好的显示
+function getChineseName(name, id) {
+    // 如果有中文名称，直接返回
+    if (chineseNames[name]) {
+        return chineseNames[name];
+    }
+    
+    // 如果没有中文名称，根据ID判断世代，返回一个友好的显示
+    const generation = getGeneration(id);
+    return `${capitalizeFirstLetter(name)} (第${generation.number}世代)`;
 }
 
 // 全局变量
