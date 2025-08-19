@@ -71,12 +71,14 @@
         
         <div class="pagination">
             <button id="first-page-button">首页</button>
+            <button id="prev-button" disabled>上一页</button>
             <div class="page-info">
                 第 <span id="current-page">1</span> / <span id="total-pages">?</span> 页
             </div>
+            <button id="next-button">下一页</button>
             <button id="last-page-button">末页</button>
             <div class="page-jump">
-                <input type="number" id="page-input" min="1" placeholder="跳转到">
+                <input type="number" id="page-input" min="1" placeholder="跳转">
                 <button id="jump-button">GO</button>
             </div>
         </div>
@@ -96,6 +98,6 @@
         </div>
     </footer>
     
-    <script src="script.js?v=2"></script>
+    <script src="script.js?v=3"></script>
 </body>
 </html>

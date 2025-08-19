@@ -1,5 +1,61 @@
 # Pokedex 宝可梦图鉴
 
+一个使用 HTML、CSS 和 JavaScript 构建的宝可梦图鉴网站，数据来源于 [PokeAPI](https://pokeapi.co/)。
+
+## 功能特点
+
+- 显示所有世代的宝可梦（第一至第九世代）
+- 支持按名称、ID 或属性搜索宝可梦
+- 按世代和属性类型筛选宝可梦
+- 分页显示，每页显示 20 个宝可梦
+- 详细的宝可梦信息，包括：
+  - 基本信息（ID、名称、属性、身高、体重等）
+  - 能力值统计
+  - 进化链
+  - 多种形态的精灵图
+- 支持中文名称显示
+- 夜间模式
+- 收藏喜欢的宝可梦
+- 响应式设计，适配各种设备
+
+## 技术栈
+
+- HTML5
+- CSS3
+- 原生 JavaScript
+- PokeAPI
+
+## 在线预览
+
+访问 [GitHub Pages](https://yourusername.github.io/pokedex/) 查看在线演示。
+
+## 本地运行
+
+1. 克隆仓库：
+   ```
+   git clone https://github.com/yourusername/pokedex.git
+   ```
+
+2. 进入项目目录：
+   ```
+   cd pokedex
+   ```
+
+3. 使用任意 HTTP 服务器运行项目，例如：
+   ```
+   npx http-server
+   ```
+
+4. 在浏览器中访问 `http://localhost:8080`
+
+## 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+## 许可证
+
+MIT
+
 一个使用原生 HTML、CSS 和 JavaScript 构建的宝可梦图鉴网站，提供从第一世代到第九世代的所有宝可梦数据。
 
 ## 功能特点
