@@ -483,7 +483,6 @@ function renderEvolutionChain(chain) {
     // 获取当前宝可梦
     const currentPokemon = chain.species;
     const currentPokemonId = extractPokemonId(currentPokemon.url);
-    const currentPokemonId = extractPokemonId(currentPokemon.url);
     const currentPokemonName = getChineseName(currentPokemon.name, currentPokemonId);
     
     html += `
